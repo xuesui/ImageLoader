@@ -5,10 +5,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.widget.GridView;
+import android.widget.ListView;
 
 import com.example.imageloader.imageloader.ImageLoader;
 import com.example.imageloader.images.ImageAdapter;
-import com.example.imageloader.images.Images;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -24,18 +24,16 @@ import okhttp3.Request;
 import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity {
-    private List<Images> imagesList=new ArrayList<>();
     public static final String URL="http://gank.io/api/data/%E7%A6%8F%E5%88%A9/0/0";
     private static final String TAG="JSON";
     private ImageLoader imageLoader;
-    String[] imageUrl;
-    ExecutorService fisxedThreadPool= Executors.newFixedThreadPool(2);
+    List<String> photoList=new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Runnable runnable1=new Runnable() {
+        Thread thread=new Thread(new Runnable() {
             @Override
             public void run() {
                 OkHttpClient client=new OkHttpClient();
@@ -54,42 +52,28 @@ public class MainActivity extends AppCompatActivity {
                     Log.w(TAG, "json返回数据为null");
                 }
             }
-        };
-        fisxedThreadPool.execute(runnable1);
-        initImages();
-        ImageAdapter imageAdapter=new ImageAdapter(this,R.layout.image_item,imagesList);
-        GridView gridView=(GridView)findViewById(R.id.gridview);
-        gridView.setAdapter(imageAdapter);
+        });
+        thread.start();
+
+        ImageAdapter imageAdapter=new ImageAdapter(MainActivity.this,photoList);
+        ListView listView=(ListView)findViewById(R.id.gridview);
+        listView.setAdapter(imageAdapter);
     }
 
     private void parseJSONWithJSONObject(String jsonData){
         try {
             JSONObject rootObject=new JSONObject(jsonData);
-            JSONObject paramzObject=rootObject.getJSONObject("paramz");
-            JSONArray jsonArray=paramzObject.getJSONArray("results");
+            String result=rootObject.getString("results");
+            JSONArray jsonArray=new JSONArray(result);
             for (int i=0;i<jsonArray.length();i++){
+                Log.d(TAG, "parseJSONWithJSONObject: "+i);
                 JSONObject jsonObject=jsonArray.getJSONObject(i);
-                imageUrl[i]=jsonObject.getString("url");
+                photoList.add(jsonObject.getString("url"));
             }
         }catch (Exception e){
             e.printStackTrace();
         }
     }
 
-    private void initImages(){
-        Runnable runnable2=new Runnable() {
-            @Override
-            public void run() {
-                Bitmap[] bitmap;
-                for (int i=0;i<imageUrl.length;i++){
-                    bitmap=new Bitmap[imageUrl.length];
-                    bitmap[i]=imageLoader.loadBitmap(imageUrl[i],200,200);
-                    Images images=new Images(bitmap[i]);
-                    imagesList.add(images);
-                }
-            }
-        };
-        fisxedThreadPool.execute(runnable2);
-    }
 }
 
