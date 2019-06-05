@@ -15,7 +15,6 @@ import android.util.LruCache;
 import android.widget.ImageView;
 
 import com.example.imageloader.R;
-import com.example.imageloader.utils.MyApplication;
 import com.jakewharton.disklrucache.DiskLruCache;
 
 import java.io.BufferedInputStream;
@@ -101,7 +100,7 @@ public class ImageLoader {
     DIskLruCache
      */
     private ImageLoader(Context context) {
-        mcontext=context;
+        context = mcontext;
         int cacheSize = (int) Runtime.getRuntime().maxMemory() / 1024 / 8;//设置最大内存为能用内存的1/8
         lruCache = new LruCache<String, Bitmap>(cacheSize) {
             @Override
@@ -126,7 +125,11 @@ public class ImageLoader {
 
     @TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR2)
     private long getUsableSpace(File path) {
-        return path.getUsableSpace();
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
+            return path.getUsableSpace();
+        }
+        final StatFs statFs = new StatFs(path.getPath());
+        return (long) statFs.getBlockSize() * (long) statFs.getAvailableBlocksLong();
     }
 
     public static ImageLoader build(Context context) {
