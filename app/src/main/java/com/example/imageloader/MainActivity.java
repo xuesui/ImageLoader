@@ -27,11 +27,13 @@ public class MainActivity extends AppCompatActivity {
     private static final String BASE_URL = "http://gank.io/api/";
     private List<String> imageUrl = new ArrayList<>();
     private List<Bitmap> imageBitmap = new ArrayList<>();
+    private RecyclerView recyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        recyclerView=(RecyclerView)findViewById(R.id.recycler_view);
         final ImageLoader imageLoader=ImageLoader.build(this);
         new Thread(new Runnable() {
             @Override
@@ -46,11 +48,21 @@ public class MainActivity extends AppCompatActivity {
                     @Override
                     public void onResponse(Call<ImageEntity> call, Response<ImageEntity> response) {
                         ImageEntity imageEntity = response.body();
-                        for (ImageEntity.ResultsBean resultsBean :
-                                imageEntity.getResults()) {
+                        for (ImageEntity.ResultsBean resultsBean:
+                             imageEntity.getResults()) {
                             imageUrl.add(resultsBean.getUrl());
+                            Log.d("Retrofit", "onResponse: " + resultsBean.getUrl());
                         }
-                        Log.d("URL", "onResponse: "+imageUrl.get(60) );
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                GridLayoutManager gridLayoutManager=new GridLayoutManager(MainActivity.this,4);
+                                recyclerView.setLayoutManager(gridLayoutManager);
+                                ImageAdapter imageAdapter=new ImageAdapter(imageUrl,imageBitmap);
+                                recyclerView.setAdapter(imageAdapter);
+                                imageAdapter.notifyDataSetChanged();
+                            }
+                        });
                     }
 
                     @Override
@@ -59,21 +71,11 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
 
-                for (int i = 0; i < imageUrl.size(); i++) {
-                    Log.d("Retrofit", "onResponse: " + imageUrl.get(i));
-                    imageBitmap.add(imageLoader.loadBitmap(imageUrl.get(i), 200, 200));
+                Log.d("kkk", "run: "+imageUrl.size());
+                for (int i=0;i<imageUrl.size();i++){
+                    imageBitmap.add(imageLoader.loadBitmap(imageUrl.get(i),200,200));
                 }
 
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        RecyclerView recyclerView=(RecyclerView)findViewById(R.id.recycler_view);
-                        GridLayoutManager gridLayoutManager=new GridLayoutManager(MainActivity.this,4);
-                        recyclerView.setLayoutManager(gridLayoutManager);
-                        ImageAdapter imageAdapter=new ImageAdapter(imageUrl,imageBitmap);
-                        recyclerView.setAdapter(imageAdapter);
-                    }
-                });
             }
         }).start();
     }
