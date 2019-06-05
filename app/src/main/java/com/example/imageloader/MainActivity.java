@@ -27,12 +27,12 @@ public class MainActivity extends AppCompatActivity {
     private static final String BASE_URL = "http://gank.io/api/";
     private List<String> imageUrl = new ArrayList<>();
     private List<Bitmap> imageBitmap = new ArrayList<>();
-    private ImageLoader imageLoader = ImageLoader.build(this);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        final ImageLoader imageLoader=ImageLoader.build(this);
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -50,17 +50,20 @@ public class MainActivity extends AppCompatActivity {
                                 imageEntity.getResults()) {
                             imageUrl.add(resultsBean.getUrl());
                         }
-                        for (int i = 0; i < imageUrl.size(); i++) {
-                            Log.d("Retrofit", "onResponse: " + imageUrl.get(i));
-                            imageBitmap.add(imageLoader.loadBitmap(imageUrl.get(i), 200, 200));
-                        }
+                        Log.d("URL", "onResponse: "+imageUrl.get(60) );
                     }
 
                     @Override
                     public void onFailure(Call<ImageEntity> call, Throwable t) {
-                        Log.e("TAG", "Throwable : " + t);
+                        Log.d("TAG", "Throwable : " + t);
                     }
                 });
+
+                for (int i = 0; i < imageUrl.size(); i++) {
+                    Log.d("Retrofit", "onResponse: " + imageUrl.get(i));
+                    imageBitmap.add(imageLoader.loadBitmap(imageUrl.get(i), 200, 200));
+                }
+
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -74,5 +77,6 @@ public class MainActivity extends AppCompatActivity {
             }
         }).start();
     }
+
 }
 

@@ -100,7 +100,7 @@ public class ImageLoader {
     DIskLruCache
      */
     private ImageLoader(Context context) {
-        context = mcontext;
+        mcontext=context;
         int cacheSize = (int) Runtime.getRuntime().maxMemory() / 1024 / 8;//设置最大内存为能用内存的1/8
         lruCache = new LruCache<String, Bitmap>(cacheSize) {
             @Override
